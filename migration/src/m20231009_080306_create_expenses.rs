@@ -9,20 +9,25 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(User::Table)
+                    .table(Expenses::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(User::Id)
+                        ColumnDef::new(Expenses::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(User::Name).string().not_null())
-                    .col(ColumnDef::new(User::Email).string().unique_key().not_null())
-                    .col(ColumnDef::new(User::Password).string().not_null())
-                    .col(ColumnDef::new(User::Uuid).uuid().unique_key().not_null())
-                    .col(ColumnDef::new(User::CreatedAt).date_time().unique_key().not_null())
+                    .col(ColumnDef::new(Expenses::Amount).string().not_null())
+                    .col(ColumnDef::new(Expenses::CategoryId).string().not_null())
+                    .col(ColumnDef::new(Expenses::UserId).uuid().not_null())
+                    .col(
+                        ColumnDef::new(Expenses::CreatedAt)
+                            .date_time()
+                            .unique_key()
+                            .default(Expr::current_timestamp())
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await
@@ -30,18 +35,17 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(User::Table).to_owned())
+            .drop_table(Table::drop().table(Expenses::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum User {
+enum Expenses {
     Table,
     Id,
-    Name,
-    Email,
-    Password,
-    Uuid,
-    CreatedAt
+    Amount,
+    CategoryId,
+    UserId,
+    CreatedAt,
 }

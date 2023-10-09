@@ -3,7 +3,6 @@ use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
-use uuid::Uuid;
 
 use crate::{
     models::user::{CreateUserModel, LoginUserModel, LoginUserResponseModel},
@@ -36,7 +35,6 @@ pub async fn create_user(
         name: Set(user_data.name.to_owned()),
         email: Set(user_data.email.to_owned()),
         password: Set(user_data.password.to_owned()),
-        uuid: Set(Uuid::new_v4()),
         created_at: Set(Utc::now().naive_utc()),
         ..Default::default()
     };

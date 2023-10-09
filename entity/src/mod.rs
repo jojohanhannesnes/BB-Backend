@@ -2,4 +2,6 @@
 
 pub mod prelude;
 
+pub mod expenses;
+pub mod expenses_categories;
 pub mod user;

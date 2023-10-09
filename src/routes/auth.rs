@@ -1,14 +1,15 @@
-use axum::{Router, http::Method, routing::post};
-use tower_http::cors::{ CorsLayer, Any};
+use axum::{http::Method, routing::post, Router};
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::handlers::auth::*;
 
-
 pub fn routes() -> Router {
-    let cors = CorsLayer::new().allow_methods(Method::POST).allow_origin(Any);
+    let cors = CorsLayer::new()
+        .allow_methods(Method::POST)
+        .allow_origin(Any);
 
     Router::new()
-    .route("/api/login", post(login_user))
-    .route("/api/user", post(create_user))
-    .layer(cors)
+        .route("/api/login", post(login_user))
+        .route("/api/register", post(create_user))
+        .layer(cors)
 }

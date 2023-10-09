@@ -16,7 +16,7 @@ pub async fn update_user(
     Json(user_data): Json<UpdateUserModel>,
 ) -> Result<(), APIError> {
     let mut user: ActiveModel = entity::user::Entity::find()
-        .filter(Condition::all().add(entity::user::Column::Uuid.eq(uuid)))
+        .filter(Condition::all().add(entity::user::Column::Id.eq(uuid)))
         .one(&db)
         .await
         .map_err(|err| APIError {
@@ -47,7 +47,7 @@ pub async fn delete_user(
     Path(uuid): Path<Uuid>,
 ) -> Result<(), APIError> {
     let user = entity::user::Entity::find()
-        .filter(Condition::all().add(entity::user::Column::Uuid.eq(uuid)))
+        .filter(Condition::all().add(entity::user::Column::Id.eq(uuid)))
         .one(&db)
         .await
         .map_err(|err| APIError {
@@ -89,7 +89,6 @@ pub async fn list_user(
             name: user.name,
             email: user.email,
             password: user.password,
-            uuid: user.uuid,
             created_at: user.created_at,
         })
         .collect();
