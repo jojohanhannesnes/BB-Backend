@@ -21,6 +21,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(User::Name).string().not_null())
                     .col(ColumnDef::new(User::Email).string().unique_key().not_null())
                     .col(ColumnDef::new(User::Password).string().not_null())
+                    .col(ColumnDef::new(User::Balance).big_integer().not_null())
                     .col(
                         ColumnDef::new(User::CreatedAt)
                             .date_time()
@@ -41,11 +42,12 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum User {
+pub enum User {
     Table,
     Id,
     Name,
     Email,
     Password,
+    Balance,
     CreatedAt,
 }

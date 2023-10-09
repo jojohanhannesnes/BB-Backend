@@ -35,6 +35,7 @@ pub async fn create_user(
         name: Set(user_data.name.to_owned()),
         email: Set(user_data.email.to_owned()),
         password: Set(user_data.password.to_owned()),
+        balance: Set(500),
         created_at: Set(Utc::now().naive_utc()),
         ..Default::default()
     };

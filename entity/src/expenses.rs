@@ -7,8 +7,8 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub amount: String,
-    pub category_id: String,
+    pub amount: i64,
+    pub category_id: i32,
     pub user_id: Uuid,
     #[sea_orm(unique)]
     pub created_at: DateTime,
@@ -19,13 +19,17 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::expenses_categories::Entity",
         from = "Column::CategoryId",
-        to = "super::expenses_categories::Column::Id"
+        to = "super::expenses_categories::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
     )]
     ExpensesCategories,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
-        to = "super::user::Column::Id"
+        to = "super::user::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
     )]
     User,
 }

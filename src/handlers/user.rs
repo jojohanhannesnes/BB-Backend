@@ -86,9 +86,11 @@ pub async fn list_user(
         })?
         .into_iter()
         .map(|user| UserModel {
+            id: user.id,
             name: user.name,
             email: user.email,
             password: user.password,
+            balance: user.balance,
             created_at: user.created_at,
         })
         .collect();

@@ -34,7 +34,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum ExpensesCategories {
+pub enum ExpensesCategories {
     Table,
     Id,
     Name,
