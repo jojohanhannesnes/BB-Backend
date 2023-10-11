@@ -4,6 +4,8 @@ use axum::{middleware, Extension, Router};
 use sea_orm::{Database, DatabaseConnection};
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
+
+use crate::utils::cron::init_cron;
 mod handlers;
 mod models;
 mod routes;
@@ -17,7 +19,7 @@ async fn main() {
 async fn server() {
     let connection_string = (utils::constants::DATABASE_URL).clone();
     let db: DatabaseConnection = Database::connect(connection_string).await.unwrap();
-
+    init_cron();
     tracing_subscriber::fmt().with_target(false).init();
     let app: Router = Router::new()
         .merge(routes::user::routes())

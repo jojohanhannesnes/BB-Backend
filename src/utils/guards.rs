@@ -4,10 +4,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use entity::user::ActiveModel;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
-
-use crate::models::user::UserModel;
 
 use super::{api_error::APIError, jwt::decode_jwt};
 

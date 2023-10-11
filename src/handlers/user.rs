@@ -1,12 +1,16 @@
 use axum::{extract::Path, http::StatusCode, Extension, Json};
-use entity::user::ActiveModel;
+use entity::user::{ActiveModel, Model};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
 use uuid::Uuid;
 
 use crate::{
-    models::user::{UpdateUserModel, UserModel},
+    models::{
+        api::dashboard::DashboardModelResponse,
+        expenses::ExpensesModel,
+        user::{UpdateUserModel, UserModel},
+    },
     utils::api_error::APIError,
 };
 
@@ -96,4 +100,22 @@ pub async fn list_user(
         .collect();
 
     Ok(Json(user))
+}
+
+pub async fn dashboard_user(
+    Extension(db): Extension<DatabaseConnection>,
+    Extension(identity): Extension<Model>,
+) -> Result<Json<DashboardModelResponse>, APIError> {
+    let user: UserModel = identity.into();
+    let expenses = entity::expenses::Entity::find()
+        .find_also_related(entity::expenses_categories::Entity)
+        .filter(entity::expenses::Column::UserId.eq(user.id))
+        .all(&db)
+        .await
+        .expect("Error")
+        .into_iter()
+        .map(ExpensesModel::from)
+        .collect();
+    let result = DashboardModelResponse { user, expenses };
+    Ok(Json(result))
 }
