@@ -11,17 +11,21 @@ members = [".", "entity", "migration"]
 [dependencies]
 entity = { path = "entity" }
 migration = { path = "migration" } 
+# app
 axum = { version = "0.6.20", features = ["headers"] }
 tokio = { version = "1.32.0", features = ["full"] }
 sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
+# support crate
 uuid = { version = "1.4.1", features = ["v4"] }
 chrono = "0.4.31"
 jsonwebtoken = "8"
 serde = {version = "1.0", features = ["derive"] }
+tower = { version = "0.4", features = ["full"] }
 tower-http = { version = "0.4.4", features = ["cors", "trace"] }
 dotenv = "0.15.0"
 lazy_static = "1.4.0"
 serde_json = "1.0.107"
-axum-macros = "0.3.8"
+axum-macros = "0.3.8" # for axum handler trait
+# error and log
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
