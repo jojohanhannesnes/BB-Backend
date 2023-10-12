@@ -3,6 +3,7 @@ use std::time::Duration;
 use chrono::Timelike;
 use tokio::time::sleep;
 
+// TODO: Add Wallet to all user
 pub fn init_cron() {
     tokio::spawn(async {
         loop {

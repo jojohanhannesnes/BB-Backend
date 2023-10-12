@@ -27,7 +27,7 @@ pub struct LoginUserModel {
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LoginUserResponseModel {
     pub token: String,
 }

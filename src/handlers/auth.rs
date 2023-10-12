@@ -1,4 +1,7 @@
-use axum::{http::StatusCode, Extension, Json};
+use axum::{
+    http::{Method, StatusCode, Uri},
+    Extension, Json,
+};
 use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, Set,
@@ -6,7 +9,7 @@ use sea_orm::{
 
 use crate::{
     models::user::{CreateUserModel, LoginUserModel, LoginUserResponseModel},
-    utils::{api_error::APIError, jwt::encode_jwt},
+    utils::{api_error::APIError, jwt::encode_jwt, log::log_request},
 };
 
 pub async fn create_user(
@@ -48,9 +51,12 @@ pub async fn create_user(
 }
 
 pub async fn login_user(
+    uri: Uri,
+    method: Method,
     Extension(db): Extension<DatabaseConnection>,
     Json(user_data): Json<LoginUserModel>,
 ) -> Result<Json<LoginUserResponseModel>, APIError> {
+    log_request(&uri, &method);
     let user = entity::user::Entity::find()
         .filter(
             Condition::all()
@@ -76,5 +82,6 @@ pub async fn login_user(
         error_code: Some(124),
     })?;
     let result = LoginUserResponseModel { token };
+    tracing::info!("{:?}", result);
     Ok(Json(result))
 }
