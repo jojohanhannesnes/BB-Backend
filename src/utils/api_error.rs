@@ -1,11 +1,12 @@
-use std::fmt::Display;
-
 use axum::{
     http::{header, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
+use serde::{Serialize, Deserialize};
 use serde_json::json;
+
+pub type ResultCustom<T> = core::result::Result<T, APIError>;
 
 pub struct APIError {
     pub message: String,
@@ -14,7 +15,7 @@ pub struct APIError {
 }
 
 impl IntoResponse for APIError {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         let status_code = self.status_code;
         (status_code, 
             [(header::CONTENT_TYPE, "application/json")],
@@ -23,30 +24,23 @@ impl IntoResponse for APIError {
     }
 }
 
-pub type Result<T> = core::result::Result<T, Error>;
-
-#[derive(Debug)]
-pub enum Error {
-    LoginFail
+#[derive(Serialize, Deserialize, Debug)]
+pub struct APISuccess<T> {
+    message: String,
+    data: T,
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
+impl <T> APISuccess<T> {
+    pub fn new(message: impl Into<String>, data: T) -> Self {
+        APISuccess { message: message.into(), data }
     }
 }
 
-impl std::error::Error for Error {}
-
-impl IntoResponse for Error {
-    fn into_response(self) -> axum::response::Response {
-        println!("->> {:<12} - {self:?}", "INTO_RES");
-
-        (StatusCode::INTERNAL_SERVER_ERROR, "UNHANDLED_CLIENT_ERROR").into_response()
+impl <T> IntoResponse for APISuccess<T> 
+where 
+T: serde::Serialize {
+    fn into_response(self) -> Response {
+        (StatusCode::OK,[(header::CONTENT_TYPE, "application/json")], Json(self)).into_response()
     }
 }
 
-async fn main_response_mapper(res: Response) -> Response {
-    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
-    res
-}

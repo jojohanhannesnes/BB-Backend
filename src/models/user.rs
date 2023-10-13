@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use entity::user::Model;
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -21,9 +21,10 @@ pub struct CreateUserModel {
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct LoginUserModel {
     pub email: String,
+    #[serde(skip_serializing)]
     pub password: String,
 }
 
@@ -47,5 +48,17 @@ impl From<Model> for UserModel {
             balance: value.balance,
             created_at: value.created_at,
         }
+    }
+}
+
+impl Serialize for LoginUserModel {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("LoginUserModel", 2)?;
+        state.serialize_field("email", &self.email)?;
+        state.serialize_field("password", "***")?;
+        state.end()
     }
 }

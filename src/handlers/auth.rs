@@ -9,7 +9,11 @@ use sea_orm::{
 
 use crate::{
     models::user::{CreateUserModel, LoginUserModel, LoginUserResponseModel},
-    utils::{api_error::APIError, jwt::encode_jwt, log::log_request},
+    utils::{
+        api_error::{APIError, APISuccess, ResultCustom},
+        jwt::encode_jwt,
+        log::log_request,
+    },
 };
 
 pub async fn create_user(
@@ -55,8 +59,8 @@ pub async fn login_user(
     method: Method,
     Extension(db): Extension<DatabaseConnection>,
     Json(user_data): Json<LoginUserModel>,
-) -> Result<Json<LoginUserResponseModel>, APIError> {
-    log_request(&uri, &method);
+) -> ResultCustom<APISuccess<LoginUserResponseModel>> {
+    log_request("Login User", &uri, &method, None, &user_data);
     let user = entity::user::Entity::find()
         .filter(
             Condition::all()
@@ -81,7 +85,7 @@ pub async fn login_user(
         status_code: StatusCode::BAD_REQUEST,
         error_code: Some(124),
     })?;
-    let result = LoginUserResponseModel { token };
-    tracing::info!("{:?}", result);
-    Ok(Json(result))
+    let result = APISuccess::new("User success login", LoginUserResponseModel { token });
+    log_request("Login user success", &uri, &method, Some(user.id), &result);
+    Ok(result)
 }
