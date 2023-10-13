@@ -11,7 +11,7 @@ use crate::{
         expenses::ExpensesModel,
         user::{UpdateUserModel, UserModel},
     },
-    utils::api_error::APIError,
+    utils::mapper::api_error::APIError,
 };
 
 pub async fn update_user(

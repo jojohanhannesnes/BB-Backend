@@ -3,7 +3,7 @@ use axum::{http::StatusCode, Extension, Json};
 use entity::user::Model;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, IntoActiveModel, IntoActiveValue, Set};
 
-use crate::{models::expenses::CreateExpensesModel, utils::api_error::APIError};
+use crate::{models::expenses::CreateExpensesModel, utils::mapper::api_error::APIError};
 
 // #[debug_handler]
 pub async fn create_expenses(

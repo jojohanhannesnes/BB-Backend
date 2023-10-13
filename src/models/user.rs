@@ -21,6 +21,13 @@ pub struct CreateUserModel {
     pub password: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CreateUserResponseModel {
+    pub email: String,
+    pub balance: i64,
+    pub created_at: NaiveDateTime,
+}
+
 #[derive(Deserialize)]
 pub struct LoginUserModel {
     pub email: String,
