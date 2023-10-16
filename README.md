@@ -10,8 +10,11 @@
  - [X] CRUD Expenses
  - [X] User Auth (Login Register)
  - [X] Success Error Mapper
+ - [] Macro Error and Success
+ - [] Request Body validator
+ - [] Build scripts
  - [] Clean Code Structure
- - [] Password Enncryption
+ - [X] Password Enncryption
  - [] AppState (Database etc)
  - [] Deployment (AWS?)
 

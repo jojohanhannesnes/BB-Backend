@@ -14,6 +14,7 @@ migration = { path = "migration" }
 # app
 axum = { version = "0.6.20", features = ["headers"] }
 tokio = { version = "1.32.0", features = ["full"] }
+bcrypt = "0.15"
 sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
 # support crate
 uuid = { version = "1.4.1", features = ["v4"] }
