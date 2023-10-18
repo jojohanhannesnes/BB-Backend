@@ -1,31 +1,29 @@
 use axum::{
     headers::{authorization::Bearer, Authorization, HeaderMapExt},
-    http::{Request, StatusCode},
+    http::Request,
     middleware::Next,
     response::Response,
 };
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use super::{jwt::decode_jwt, mapper::api_error::APIError};
+use super::{
+    jwt::decode_jwt,
+    mapper::api_error::{APIError, AppError},
+};
 
 pub async fn guard<T>(mut req: Request<T>, next: Next<T>) -> Result<Response, APIError> {
     let token = req
         .headers()
         .typed_get::<Authorization<Bearer>>()
-        .ok_or(APIError {
-            message: "No Auth Token found".to_owned(),
-            status_code: StatusCode::BAD_REQUEST,
-            error_code: Some(99),
-        })?
+        .ok_or(APIError::new(
+            AppError::AuthTokenNotFound,
+            "No Auth Token found",
+        ))?
         .token()
         .to_owned();
 
     let claim = decode_jwt(token)
-        .map_err(|_| APIError {
-            message: "Token not Valid".to_owned(),
-            status_code: StatusCode::UNAUTHORIZED,
-            error_code: Some(123),
-        })?
+        .map_err(|err| APIError::new(AppError::AuthTokenError, err))?
         .claims;
 
     let db = req.extensions().get::<DatabaseConnection>().unwrap();
@@ -34,16 +32,11 @@ pub async fn guard<T>(mut req: Request<T>, next: Next<T>) -> Result<Response, AP
         .filter(entity::user::Column::Email.eq(claim.email.to_lowercase()))
         .one(db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?
-        .ok_or(APIError {
-            message: "User Not Found".to_owned(),
-            status_code: StatusCode::UNAUTHORIZED,
-            error_code: Some(41),
-        })?;
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
+        .ok_or(APIError::new(
+            AppError::UserNotFound,
+            "User not found".to_owned(),
+        ))?;
 
     req.extensions_mut().insert(identity);
     Ok(next.run(req).await)

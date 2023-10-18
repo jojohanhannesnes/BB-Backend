@@ -19,10 +19,10 @@ sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustl
 # support crate
 uuid = { version = "1.4.1", features = ["v4"] }
 chrono = "0.4.31"
-jsonwebtoken = "8"
+jsonwebtoken = "9.0.0"
 serde = {version = "1.0", features = ["derive"] }
 tower = { version = "0.4", features = ["full"] }
-tower-http = { version = "0.4.4", features = ["cors", "trace"] }
+tower-http = { version = "0.4.4", features = ["cors", "trace", "catch-panic"] }
 dotenv = "0.15.0"
 lazy_static = "1.4.0"
 serde_json = "1.0.107"

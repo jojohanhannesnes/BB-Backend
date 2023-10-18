@@ -1,4 +1,4 @@
-use axum::{extract::Path, http::StatusCode, Extension, Json};
+use axum::{extract::Path, Extension, Json};
 use entity::user::{ActiveModel, Model};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, Set,
@@ -11,37 +11,32 @@ use crate::{
         expenses::ExpensesModel,
         user::{UpdateUserModel, UserModel},
     },
-    utils::mapper::api_error::APIError,
+    utils::mapper::{
+        api_error::{APIError, AppError},
+        api_success::{APISuccess, AppSuccess},
+        ResultAPI,
+    },
 };
 
 pub async fn update_user(
     Extension(db): Extension<DatabaseConnection>,
     Path(uuid): Path<Uuid>,
     Json(user_data): Json<UpdateUserModel>,
-) -> Result<(), APIError> {
+) -> ResultAPI<()> {
     let mut user: ActiveModel = entity::user::Entity::find()
         .filter(Condition::all().add(entity::user::Column::Id.eq(uuid)))
         .one(&db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?
-        .ok_or(APIError {
-            message: "Not Found".to_owned(),
-            status_code: StatusCode::NOT_FOUND,
-            error_code: Some(44),
-        })?
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
+        .ok_or(APIError::new(AppError::UserNotFound, "User not found"))?
         .into();
 
     user.name = Set(user_data.name);
 
-    let _ = user.update(&db).await.map_err(|err| APIError {
-        message: err.to_string(),
-        status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        error_code: Some(50),
-    });
+    let _ = user
+        .update(&db)
+        .await
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()));
 
     Ok(())
 }
@@ -49,45 +44,29 @@ pub async fn update_user(
 pub async fn delete_user(
     Extension(db): Extension<DatabaseConnection>,
     Path(uuid): Path<Uuid>,
-) -> Result<(), APIError> {
+) -> ResultAPI<()> {
     let user = entity::user::Entity::find()
         .filter(Condition::all().add(entity::user::Column::Id.eq(uuid)))
         .one(&db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?
-        .ok_or(APIError {
-            message: "Not Found".to_owned(),
-            status_code: StatusCode::NOT_FOUND,
-            error_code: Some(44),
-        })?;
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
+        .ok_or(APIError::new(AppError::UserNotFound, "User not found"))?;
 
     entity::user::Entity::delete_by_id(user.id)
         .exec(&db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?;
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?;
 
     Ok(())
 }
 
 pub async fn list_user(
     Extension(db): Extension<DatabaseConnection>,
-) -> Result<Json<Vec<UserModel>>, APIError> {
+) -> ResultAPI<APISuccess<Vec<UserModel>>> {
     let user: Vec<UserModel> = entity::user::Entity::find()
         .all(&db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
         .into_iter()
         .map(|user| UserModel {
             id: user.id,
@@ -99,13 +78,17 @@ pub async fn list_user(
         })
         .collect();
 
-    Ok(Json(user))
+    Ok(APISuccess::new(
+        AppSuccess::SuccessGetList,
+        "List of users",
+        user,
+    ))
 }
 
 pub async fn dashboard_user(
     Extension(db): Extension<DatabaseConnection>,
     Extension(identity): Extension<Model>,
-) -> Result<Json<DashboardModelResponse>, APIError> {
+) -> ResultAPI<APISuccess<DashboardModelResponse>> {
     let user: UserModel = identity.into();
     let expenses = entity::expenses::Entity::find()
         .find_also_related(entity::expenses_categories::Entity)
@@ -117,5 +100,9 @@ pub async fn dashboard_user(
         .map(ExpensesModel::from)
         .collect();
     let result = DashboardModelResponse { user, expenses };
-    Ok(Json(result))
+    Ok(APISuccess::new(
+        AppSuccess::SuccessGetList,
+        "User Dashboard",
+        result,
+    ))
 }

@@ -2,21 +2,8 @@
 
  Generate entity for every database update to sync
  ```
-  sea-orm-cli generate entity -o entity/src
+ sea-orm-cli generate entity -o entity/src
  ```
-
- TODO
- - [X] Basic Setup
- - [X] CRUD Expenses
- - [X] User Auth (Login Register)
- - [X] Success Error Mapper
- - [] Macro Error and Success
- - [] Request Body validator
- - [] Build scripts
- - [] Clean Code Structure
- - [X] Password Enncryption
- - [] AppState (Database etc)
- - [] Deployment (AWS?)
 
  Useful Resources
  - https://github.com/tokio-rs/axum/discussions/1830 (State vs Extension)

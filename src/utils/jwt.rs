@@ -28,12 +28,12 @@ pub fn encode_jwt(email: String) -> Result<String, StatusCode> {
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-pub fn decode_jwt(jwt: String) -> Result<TokenData<Claims>, StatusCode> {
+pub fn decode_jwt(jwt: String) -> Result<TokenData<Claims>, String> {
     let secret: String = utils::constants::TOKEN.to_string();
     decode(
         &jwt,
         &DecodingKey::from_secret(secret.as_ref()),
         &Validation::default(),
     )
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    .map_err(|err| err.to_string())
 }

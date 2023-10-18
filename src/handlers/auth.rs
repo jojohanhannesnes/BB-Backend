@@ -1,5 +1,5 @@
 use axum::{
-    http::{Method, StatusCode, Uri},
+    http::{Method, Uri},
     Extension, Json,
 };
 use bcrypt::{hash, verify, DEFAULT_COST};
@@ -16,7 +16,7 @@ use crate::{
         jwt::encode_jwt,
         log::log_request,
         mapper::{
-            api_error::APIError,
+            api_error::{APIError, AppError},
             api_success::{APISuccess, AppSuccess},
             ResultAPI,
         },
@@ -31,18 +31,13 @@ pub async fn create_user(
         .filter(entity::user::Column::Email.eq(user_data.email.clone()))
         .one(&db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?;
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?;
 
     if user.is_some() {
-        return Err(APIError {
-            message: "User Exist".to_owned(),
-            status_code: StatusCode::CONFLICT,
-            error_code: Some(40),
-        });
+        return Err(APIError::new(
+            AppError::UserAlreadyExist,
+            "User Already Exist",
+        ));
     }
 
     let user_model = entity::user::ActiveModel {
@@ -53,11 +48,10 @@ pub async fn create_user(
         created_at: Set(Utc::now().naive_utc()),
         ..Default::default()
     };
-    let created_user = user_model.insert(&db).await.map_err(|err| APIError {
-        message: err.to_string(),
-        status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        error_code: Some(50),
-    })?;
+    let created_user = user_model
+        .insert(&db)
+        .await
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?;
 
     let result = APISuccess::new(
         AppSuccess::UserCreated,
@@ -83,35 +77,17 @@ pub async fn login_user(
         .filter(Condition::all().add(entity::user::Column::Email.eq(user_data.email)))
         .one(&db)
         .await
-        .map_err(|err| APIError {
-            message: err.to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: Some(50),
-        })?
-        .ok_or(APIError {
-            message: "User Not Found".to_owned(),
-            status_code: StatusCode::NOT_FOUND,
-            error_code: Some(44),
-        })?;
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
+        .ok_or(APIError::new(AppError::UserNotFound, "User not found"))?;
 
-    let password_verify = verify(user_data.password, &user.password).map_err(|err| APIError {
-        message: err.to_string(),
-        status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        error_code: Some(20),
-    })?;
+    let password_verify = verify(user_data.password, &user.password)
+        .map_err(|err| APIError::new(AppError::PasswordVerifyError, err.to_string()))?;
 
     if !password_verify {
-        return Err(APIError {
-            message: "Wrong Password".to_owned(),
-            status_code: StatusCode::BAD_REQUEST,
-            error_code: Some(40),
-        });
+        return Err(APIError::new(AppError::InvalidPassword, "Invalid password"));
     }
-    let token = encode_jwt(user.email).map_err(|_| APIError {
-        message: "Cannot encode JWT".to_owned(),
-        status_code: StatusCode::BAD_REQUEST,
-        error_code: Some(124),
-    })?;
+    let token = encode_jwt(user.email)
+        .map_err(|_| APIError::new(AppError::PasswordEncryptionError, "cannot encrypt password"))?;
     let result = APISuccess::new(
         AppSuccess::UserLoggedIn,
         "User success login",

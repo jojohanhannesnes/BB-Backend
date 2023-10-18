@@ -1,14 +1,15 @@
 use axum::{
-    http::{header, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
 use serde::{Deserialize, Serialize};
 
-const HEADER: [(axum::headers::HeaderName, &str); 1] = [(header::CONTENT_TYPE, "application/json")];
+use super::HEADER;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum AppSuccess {
+    SuccessGetList,
     UserLoggedIn,
     UserCreated,
 }
@@ -37,7 +38,9 @@ where
 {
     fn into_response(self) -> Response {
         match self.status {
-            AppSuccess::UserLoggedIn => (StatusCode::OK, HEADER, Json(self)).into_response(),
+            AppSuccess::UserLoggedIn | AppSuccess::SuccessGetList => {
+                (StatusCode::OK, HEADER, Json(self)).into_response()
+            }
             AppSuccess::UserCreated => (StatusCode::CREATED, HEADER, Json(self)).into_response(),
         }
     }

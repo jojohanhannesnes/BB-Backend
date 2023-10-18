@@ -1,4 +1,8 @@
-use axum::{http::Method, routing::post, Router};
+use axum::{
+    http::Method,
+    routing::{get, post},
+    Router,
+};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::handlers::expenses::*;
@@ -10,6 +14,6 @@ pub fn routes() -> Router {
 
     Router::new()
         .route("/api/expenses", post(create_expenses))
-        // .route("/api/expenses/category", get(get_category))
+        .route("/api/expenses/category", get(get_category))
         .layer(cors)
 }

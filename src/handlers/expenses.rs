@@ -1,27 +1,30 @@
-use axum::{http::StatusCode, Extension, Json};
+use axum::{Extension, Json};
 // use axum_macros::debug_handler;
 use entity::user::Model;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, IntoActiveModel, IntoActiveValue, Set};
+use sea_orm::{
+    ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, IntoActiveValue, Set,
+};
 
-use crate::{models::expenses::CreateExpensesModel, utils::mapper::api_error::APIError};
+use crate::{
+    models::expenses::CreateExpensesModel,
+    utils::mapper::{
+        api_error::{APIError, AppError},
+        api_success::{APISuccess, AppSuccess},
+        ResultAPI,
+    },
+};
 
 // #[debug_handler]
 pub async fn create_expenses(
     Extension(db): Extension<DatabaseConnection>,
     Extension(identity): Extension<Model>,
     Json(create_data): Json<CreateExpensesModel>,
-) -> Result<(), APIError> {
+) -> ResultAPI<()> {
     let balance = identity.balance - create_data.amount;
     let user_id = identity.id;
     let mut user = identity.into_active_model();
     user.balance = Set(balance);
     let _ = user.update(&db).await.unwrap();
-
-    // .map_err(|_| APIError {
-    //     message: "Failed to update user balance".to_owned(),
-    //     status_code: StatusCode::INTERNAL_SERVER_ERROR,
-    //     error_code: Some(19),
-    // });
     entity::expenses::ActiveModel {
         amount: create_data.amount.into_active_value(),
         category_id: create_data.category_id.into_active_value(),
@@ -30,12 +33,24 @@ pub async fn create_expenses(
     }
     .insert(&db)
     .await
-    .map_err(|_| APIError {
-        message: "Failed to insert Expenses".to_owned(),
-        status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        error_code: Some(11),
-    })?;
+    .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?;
     Ok(())
 }
 
-// pub async fn get_category() {}
+pub async fn get_category(
+    Extension(db): Extension<DatabaseConnection>,
+) -> ResultAPI<APISuccess<Vec<String>>> {
+    let categories: Vec<String> = entity::expenses_categories::Entity::find()
+        .all(&db)
+        .await
+        .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
+        .into_iter()
+        .map(|category| category.name)
+        .collect();
+
+    Ok(APISuccess::new(
+        AppSuccess::SuccessGetList,
+        "List of categories",
+        categories,
+    ))
+}
