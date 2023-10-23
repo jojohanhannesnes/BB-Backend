@@ -1,17 +1,24 @@
 use axum::{
+    extract::State,
     headers::{authorization::Bearer, Authorization, HeaderMapExt},
     http::Request,
     middleware::Next,
     response::Response,
 };
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+use crate::routes::AppState;
 
 use super::{
     jwt::decode_jwt,
     mapper::api_error::{APIError, AppError},
 };
 
-pub async fn guard<T>(mut req: Request<T>, next: Next<T>) -> Result<Response, APIError> {
+pub async fn guard<T>(
+    State(AppState { db }): State<AppState>,
+    mut req: Request<T>,
+    next: Next<T>,
+) -> Result<Response, APIError> {
     let token = req
         .headers()
         .typed_get::<Authorization<Bearer>>()
@@ -26,11 +33,9 @@ pub async fn guard<T>(mut req: Request<T>, next: Next<T>) -> Result<Response, AP
         .map_err(|err| APIError::new(AppError::AuthTokenError, err))?
         .claims;
 
-    let db = req.extensions().get::<DatabaseConnection>().unwrap();
-
     let identity = entity::user::Entity::find()
         .filter(entity::user::Column::Email.eq(claim.email.to_lowercase()))
-        .one(db)
+        .one(&db)
         .await
         .map_err(|err| APIError::new(AppError::DbError, err.to_string()))?
         .ok_or(APIError::new(

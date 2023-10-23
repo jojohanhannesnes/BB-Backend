@@ -2,28 +2,57 @@ use std::any::Any;
 
 use axum::{
     body::Body,
+    error_handling::HandleErrorLayer,
     http::{header, StatusCode},
     middleware,
     response::{IntoResponse, Response},
-    Extension, Router,
+    BoxError, Router,
 };
+use sea_orm::DatabaseConnection;
+use std::time::Duration;
+use tower::{
+    timeout::{self, TimeoutLayer},
+    ServiceBuilder,
+};
+use tower_http::catch_panic::CatchPanicLayer;
 
-use crate::utils::{database::init_database, guards};
+use crate::utils::{
+    database::init_database,
+    guards,
+    mapper::api_error::{APIError, AppError},
+};
 
 pub mod auth;
 pub mod expenses;
 pub mod user;
+#[derive(Clone)]
+pub struct AppState {
+    pub db: DatabaseConnection,
+}
 
 pub async fn init_router() -> Router {
-    Router::new()
+    let app_state = AppState {
+        db: init_database().await,
+    };
+
+    let routes = Router::new()
         .merge(user::routes())
         .merge(expenses::routes())
-        .route_layer(middleware::from_fn(guards::guard))
-        .merge(auth::routes())
-        .layer(Extension(init_database().await))
-        .layer(tower_http::catch_panic::CatchPanicLayer::custom(
-            handle_panic,
+        .route_layer(middleware::from_fn_with_state(
+            app_state.clone(),
+            guards::guard,
         ))
+        .merge(auth::routes());
+
+    let services = ServiceBuilder::new()
+        .layer(CatchPanicLayer::custom(handle_panic))
+        .layer(HandleErrorLayer::new(handle_timeout_error))
+        .layer(TimeoutLayer::new(Duration::from_secs(2)));
+
+    Router::new()
+        .nest("/api", routes)
+        .with_state(app_state)
+        .layer(services)
         .fallback(fallback)
 }
 
@@ -56,4 +85,12 @@ fn handle_panic(err: Box<dyn Any + Send + 'static>) -> Response<Body> {
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap()
+}
+
+async fn handle_timeout_error(err: BoxError) -> APIError {
+    if err.is::<timeout::error::Elapsed>() {
+        APIError::new(AppError::RequestTimeout, err.to_string())
+    } else {
+        APIError::new(AppError::InternalError, err.to_string())
+    }
 }

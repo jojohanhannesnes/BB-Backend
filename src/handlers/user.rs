@@ -1,8 +1,9 @@
-use axum::{extract::Path, Extension, Json};
-use entity::user::{ActiveModel, Model};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, Set,
+use axum::{
+    extract::{Path, State},
+    Extension, Json,
 };
+use entity::user::{ActiveModel, Model};
+use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
 use crate::{
@@ -11,6 +12,7 @@ use crate::{
         expenses::ExpensesModel,
         user::{UpdateUserModel, UserModel},
     },
+    routes::AppState,
     utils::mapper::{
         api_error::{APIError, AppError},
         api_success::{APISuccess, AppSuccess},
@@ -19,7 +21,7 @@ use crate::{
 };
 
 pub async fn update_user(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
     Path(uuid): Path<Uuid>,
     Json(user_data): Json<UpdateUserModel>,
 ) -> ResultAPI<()> {
@@ -42,7 +44,7 @@ pub async fn update_user(
 }
 
 pub async fn delete_user(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
     Path(uuid): Path<Uuid>,
 ) -> ResultAPI<()> {
     let user = entity::user::Entity::find()
@@ -61,7 +63,7 @@ pub async fn delete_user(
 }
 
 pub async fn list_user(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
 ) -> ResultAPI<APISuccess<Vec<UserModel>>> {
     let user: Vec<UserModel> = entity::user::Entity::find()
         .all(&db)
@@ -86,7 +88,7 @@ pub async fn list_user(
 }
 
 pub async fn dashboard_user(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
     Extension(identity): Extension<Model>,
 ) -> ResultAPI<APISuccess<DashboardModelResponse>> {
     let user: UserModel = identity.into();

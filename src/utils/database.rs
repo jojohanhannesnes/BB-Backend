@@ -9,7 +9,6 @@ pub async fn init_database() -> DatabaseConnection {
     opt.max_connections(100)
         .min_connections(5)
         .sqlx_logging(true);
-    // let test = Database::connect(opt).await.unwrap();
     match Database::connect(opt).await {
         Ok(db) => {
             info!("Connected to database");

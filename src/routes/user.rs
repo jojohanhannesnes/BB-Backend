@@ -7,15 +7,17 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::handlers::user::*;
 
-pub fn routes() -> Router {
+use super::AppState;
+
+pub fn routes() -> Router<AppState> {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::PUT, Method::DELETE])
         .allow_origin(Any);
 
     Router::new()
-        .route("/api/user/:uuid", delete(delete_user))
-        .route("/api/user/:uuid", put(update_user))
-        .route("/api/users", get(list_user))
-        .route("/api/user/dashboard", get(dashboard_user))
+        .route("/user/:uuid", delete(delete_user))
+        .route("/user/:uuid", put(update_user))
+        .route("/users", get(list_user))
+        .route("/user/dashboard", get(dashboard_user))
         .layer(cors)
 }

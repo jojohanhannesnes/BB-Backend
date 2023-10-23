@@ -1,12 +1,11 @@
-use axum::{Extension, Json};
+use axum::{extract::State, Extension, Json};
 // use axum_macros::debug_handler;
 use entity::user::Model;
-use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, IntoActiveValue, Set,
-};
+use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, IntoActiveValue, Set};
 
 use crate::{
     models::expenses::CreateExpensesModel,
+    routes::AppState,
     utils::mapper::{
         api_error::{APIError, AppError},
         api_success::{APISuccess, AppSuccess},
@@ -16,7 +15,7 @@ use crate::{
 
 // #[debug_handler]
 pub async fn create_expenses(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
     Extension(identity): Extension<Model>,
     Json(create_data): Json<CreateExpensesModel>,
 ) -> ResultAPI<()> {
@@ -38,7 +37,7 @@ pub async fn create_expenses(
 }
 
 pub async fn get_category(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
 ) -> ResultAPI<APISuccess<Vec<String>>> {
     let categories: Vec<String> = entity::expenses_categories::Entity::find()
         .all(&db)

@@ -17,6 +17,8 @@ pub enum AppError {
     InvalidPassword,
     PasswordVerifyError,
     PasswordEncryptionError,
+    RequestTimeout,
+    InternalError,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,6 +48,8 @@ impl IntoResponse for APIError {
             AppError::InvalidPassword => (StatusCode::UNAUTHORIZED, 41),
             AppError::PasswordVerifyError => (StatusCode::UNAUTHORIZED, 42),
             AppError::PasswordEncryptionError => (StatusCode::UNAUTHORIZED, 43),
+            AppError::RequestTimeout => (StatusCode::REQUEST_TIMEOUT, 99),
+            AppError::InternalError => (StatusCode::INTERNAL_SERVER_ERROR, 100),
         };
 
         let response = APIErrorResponse {

@@ -1,17 +1,19 @@
+use std::{thread, time::Duration};
+
 use axum::{
+    extract::State,
     http::{Method, Uri},
-    Extension, Json,
+    Json,
 };
 use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::Utc;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, Set,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, EntityTrait, QueryFilter, Set};
 
 use crate::{
     models::user::{
         CreateUserModel, CreateUserResponseModel, LoginUserModel, LoginUserResponseModel,
     },
+    routes::AppState,
     utils::{
         jwt::encode_jwt,
         log::log_request,
@@ -24,7 +26,7 @@ use crate::{
 };
 
 pub async fn create_user(
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
     Json(user_data): Json<CreateUserModel>,
 ) -> ResultAPI<APISuccess<CreateUserResponseModel>> {
     let user = entity::user::Entity::find()
@@ -69,9 +71,10 @@ pub async fn create_user(
 pub async fn login_user(
     uri: Uri,
     method: Method,
-    Extension(db): Extension<DatabaseConnection>,
+    State(AppState { db }): State<AppState>,
     Json(user_data): Json<LoginUserModel>,
 ) -> ResultAPI<APISuccess<LoginUserResponseModel>> {
+    thread::sleep(Duration::from_secs(5));
     log_request("Login User", &uri, &method, None, &user_data);
     let user = entity::user::Entity::find()
         .filter(Condition::all().add(entity::user::Column::Email.eq(user_data.email)))
