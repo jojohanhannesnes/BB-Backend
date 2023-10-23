@@ -6,6 +6,7 @@ use axum::{
     http::{header, StatusCode},
     middleware,
     response::{IntoResponse, Response},
+    routing::get,
     BoxError, Router,
 };
 use sea_orm::DatabaseConnection;
@@ -50,6 +51,7 @@ pub async fn init_router() -> Router {
         .layer(TimeoutLayer::new(Duration::from_secs(2)));
 
     Router::new()
+        .route("/root", get(root))
         .nest("/api", routes)
         .with_state(app_state)
         .layer(services)
@@ -61,6 +63,10 @@ async fn fallback() -> impl IntoResponse {
         StatusCode::NOT_FOUND,
         "The requested resource was not found",
     )
+}
+
+async fn root() -> &'static str {
+    "Hello, World!"
 }
 
 fn handle_panic(err: Box<dyn Any + Send + 'static>) -> Response<Body> {

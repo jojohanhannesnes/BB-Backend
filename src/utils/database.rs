@@ -1,3 +1,6 @@
+use std::error::Error;
+
+use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use tracing::info;
 
@@ -11,9 +14,15 @@ pub async fn init_database() -> DatabaseConnection {
         .sqlx_logging(true);
     match Database::connect(opt).await {
         Ok(db) => {
-            info!("Connected to database");
+            run_migration(&db).await.unwrap();
+            info!("Connected to database {:?} :jo", connection_string);
             db
         }
         Err(err) => panic!("Cannot connect to database {err}"),
     }
+}
+
+async fn run_migration(db: &DatabaseConnection) -> Result<(), Box<dyn Error>> {
+    Migrator::up(db, None).await?;
+    Ok(())
 }

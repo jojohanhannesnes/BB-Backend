@@ -74,7 +74,6 @@ pub async fn login_user(
     State(AppState { db }): State<AppState>,
     Json(user_data): Json<LoginUserModel>,
 ) -> ResultAPI<APISuccess<LoginUserResponseModel>> {
-    thread::sleep(Duration::from_secs(5));
     log_request("Login User", &uri, &method, None, &user_data);
     let user = entity::user::Entity::find()
         .filter(Condition::all().add(entity::user::Column::Email.eq(user_data.email)))

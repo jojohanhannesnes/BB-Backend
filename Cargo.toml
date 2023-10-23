@@ -34,3 +34,7 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"]}
 [dev-dependencies]
 anyhow = "1"
 httpc-test = "0.1.1"
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.

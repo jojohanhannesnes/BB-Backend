@@ -17,7 +17,7 @@ fn initialize() {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     initialize();
-    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
     info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(init_router().await.into_make_service())
